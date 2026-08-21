@@ -1,6 +1,7 @@
 #include"shell_prompt.h"
 #include<stdio.h>
 #include<stdlib.h>
+#include"lexer.h"
 int main(){
     home();
     char* line=NULL;
@@ -13,6 +14,10 @@ int main(){
             printf("\n");break;
 
         }
+        if (r>0&&line[r-1]=='\n'){line[r-1]='\0';r--;}
+        if (r==0)continue;
+        Token*tokens=convert(line);
+        if (tokens){print(tokens);freee(tokens);}
     }
     free(line);
     return 0;
