@@ -79,14 +79,3 @@ while(*p!='\0'){
     return head;
 }
 
-void print(Token *head) {
-    const char *type_names[] = {"WORD", "PIPE", "AND", "COLON", "LESS", "GREATER", "GREATER2"};
-    Token *curr = head;
-    while (curr) {
-        printf("[%s", type_names[curr->type]);
-        if (curr->type == WORD) printf(": %s", curr->val);
-        printf("] -> ");
-        curr = curr->next;
-    }
-    printf("NULL\n");
-}
