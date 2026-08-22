@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <pwd.h>
 #include <sys/types.h>
-
-static char home_shell[PATH_MAX];
+#include <linux/limits.h>
+char home_shell[PATH_MAX];
 static size_t home_len;
 void home(){
     if (!getcwd(home_shell, sizeof(home_shell))){
@@ -19,7 +19,7 @@ void home(){
 }
 
 void prompt(){
-    char host[HOST_NAME_MAX];
+    char host[256];
     char cwd[PATH_MAX];
  char *username;
     struct passwd *pw=getpwuid(getuid());

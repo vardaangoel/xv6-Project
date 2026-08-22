@@ -3,7 +3,11 @@
 #include<stdlib.h>
 #include"lexer.h"
 #include"grammar.h"
+#include"hop.h"
+#include <sys/types.h>
+#include<string.h>
 int main(){
+
     home();
     char* line=NULL;
     size_t l=0;
@@ -19,8 +23,21 @@ int main(){
         if (r==0)continue;
         Token*tokens=convert(line);
         if (tokens){if (check(tokens)==0){
-            fprintf(stderr, "cshell: invalid syntax\n");freee(tokens);}}
-    }
+            fprintf(stderr, "cshell: invalid syntax\n");freee(tokens);}
+            else{
+                if (tokens->type==WORD&&strcmp(tokens->val,"hop")==0){
+                    char*inp[256];
+                    int cnt=0;
+                    Token*curr=tokens->next;
+                    while(curr!=NULL&&curr->type==WORD&&cnt<256){
+                        inp[cnt++]=curr->val;
+                        curr=curr->next;
+                    }
+                    hopper(inp,cnt);
+                }
+            }
+            free(tokens);
+    }}
     free(line);
     return 0;
 }
