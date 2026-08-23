@@ -6,6 +6,7 @@
 #include"hop.h"
 #include <sys/types.h>
 #include<string.h>
+#include"reveal.h"
 int main(){
 
     home();
@@ -34,6 +35,16 @@ int main(){
                         curr=curr->next;
                     }
                     hopper(inp,cnt);
+                }
+                else if (tokens->type==WORD&&strcmp(tokens->val,"reveal")==0){
+                    char*input[256];int count=0;
+                    Token*curr=tokens->next;
+                   while (curr != NULL && curr->type == WORD && count < 256) {
+                        input[count++] = curr->val;
+                        curr = curr->next;
+                    }
+                    
+                    reveal(input, count);
                 }
             }
             free(tokens);
