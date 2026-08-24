@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include<string.h>
 #include"reveal.h"
+#include"peek.h"
 int main(){
 
     home();
@@ -45,6 +46,16 @@ int main(){
                     }
                     
                     reveal(input, count);
+                }
+                else if (tokens->type==WORD&&strcmp(tokens->val,"peek")==0){
+                    char*input[256];int count=0;
+                    Token*curr=tokens->next;
+
+                     while (curr != NULL && curr->type == WORD && count < 256) {
+                        input[count++] = curr->val;
+                        curr = curr->next;
+                    }
+peek(input,count);
                 }
             }
             free(tokens);
