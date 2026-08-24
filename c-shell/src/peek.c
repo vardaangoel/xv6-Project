@@ -13,7 +13,7 @@ typedef struct{
     int total,nonempty;
     int line_num;
 }File;
-void path(char*inp,char*out){
+static void path(char*inp,char*out){
    if (strcmp(inp,"-")==0) {
         strcpy(out,"-");
     } else if (strcmp(inp,"~")==0) {
@@ -55,7 +55,7 @@ static void buff(File *f) {
     free(line);
 }
 
-void cnt(File*f){
+static void cnt(File*f){
     FILE*fi=fopen(f->name,"r");
 if (!fi)return;
 f->nonempty=0;
@@ -70,7 +70,7 @@ free(line);fclose(fi);
 
 }
 
-void print(File*f,int n,int*line_n){
+static void print(File*f,int n,int*line_n){
     FILE*fi;
     if (strcmp(f->name,"-")==0){fi=stdin;}
     else {fi=fopen(f->name,"r");}
@@ -91,7 +91,7 @@ if (e==0){printf("%d ",(*line_n)++);}
 
 }
 
-void print_rev(File*f,int n){
+static void print_rev(File*f,int n){
     if (strcmp(f->name,"-")==0){
 int curr=f->line_num;
 for (int j=f->total-1;j>=0;j--){

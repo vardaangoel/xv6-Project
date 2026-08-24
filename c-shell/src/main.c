@@ -8,6 +8,7 @@
 #include<string.h>
 #include"reveal.h"
 #include"peek.h"
+#include"locate.h"
 int main(){
 
     home();
@@ -56,6 +57,15 @@ int main(){
                         curr = curr->next;
                     }
 peek(input,count);
+                }
+                else if(tokens->type==WORD&&strcmp(tokens->val,"locate")==0){
+                     char*input[256];int count=0;
+                    Token*curr=tokens->next;
+
+                     while (curr != NULL && curr->type == WORD && count < 256) {
+                        input[count++] = curr->val;
+                        curr = curr->next;
+                    }locate(input,count);
                 }
             }
             free(tokens);
