@@ -27,7 +27,7 @@ int main(){
         if (r==0)continue;
         Token*tokens=convert(line);
         if (tokens){if (check(tokens)==0){
-            fprintf(stderr, "cshell: invalid syntax\n");freee(tokens);}
+            fprintf(stderr, "cshell: invalid syntax\n");}
             else{
                 if (tokens->type==WORD&&strcmp(tokens->val,"hop")==0){
                     char*inp[256];
@@ -68,19 +68,21 @@ peek(input,count);
                         curr = curr->next;
                     }locate(input,count);
                 }
-                else if (tokens->type==WORD){
+                else {
                     char*input[256];int count=0;
                                 Token*curr=tokens;
 
-                     while (curr != NULL && curr->type == WORD && count < 256) {
+                     while (curr != NULL &&count < 256) {
+                        if (strcmp(curr->val, ";") == 0 || strcmp(curr->val, "&") == 0) {
+            break;
+        }
                         input[count++] = curr->val;
                         curr = curr->next;
                     }execute(input,count);
                 }
                 }
             
-            free(tokens);
+            freee(tokens);
     }}
-    free(line);
     return 0;
 }

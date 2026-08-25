@@ -28,15 +28,15 @@ Token*convert(char*input){
     char*p=input;while(*p!='\0'){
         if (isspace(*p)){p++;continue;}
         else {
-        if (*p=='|'){add(&head,&tail,PIPE,NULL);p++; continue;}
-        if (*p=='&'){add(&head,&tail,AND,NULL);p++; continue; }
-        if (*p==';'){add(&head,&tail,COLON,NULL); p++; continue; }
-        if (*p=='<'){add(&head,&tail,LESS, NULL);p++; continue; }
+        if (*p=='|'){add(&head,&tail,PIPE,"|");p++; continue;}
+        if (*p=='&'){add(&head,&tail,AND,"&");p++; continue; }
+        if (*p==';'){add(&head,&tail,COLON,";"); p++; continue; }
+        if (*p=='<'){add(&head,&tail,LESS, "<");p++; continue; }
         if (*p=='>') {if (*(p+1)=='>') {
-                add(&head, &tail,GREATER2,NULL);
+                add(&head, &tail,GREATER2,">>");
                 p+=2;
             } else {
-                add(&head,&tail,GREATER,NULL);
+                add(&head,&tail,GREATER,">");
                 p++;
             }
             continue;}

@@ -21,9 +21,8 @@ static int compare(const void*a,const void*b){
 }
 
 static void history(char *buffer) {
-    const char *home = getenv("HOME");
-    if (home!=NULL) {
-    snprintf(buffer, PATH_MAX, "%s/.shell_history", home);
+    if (strlen(home_shell)>0) {
+    snprintf(buffer, PATH_MAX, "%s/.shell_history", home_shell);
     }
 }
 static void new_rec(char*destpath){
@@ -129,7 +128,7 @@ static void hopto(char*input){
 if (chdir(dest)==0){
     strcpy(prev,curr);
     char next[PATH_MAX];
-    if (getcwd(next,PATH_MAX)!=0){
+    if (getcwd(next,PATH_MAX)!=NULL){
 new_rec(next);
     }
 return;
