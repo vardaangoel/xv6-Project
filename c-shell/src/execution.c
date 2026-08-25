@@ -58,30 +58,56 @@ return NULL;}
 
 void execute(char**input,int count){
     if (input[0]==NULL||count==0)return;
+    int pipeindex[1000];
+    int n=1;
+    pipeindex[0]=-1;
+    for (int i=0;i<count;i++){
+        if (strcmp(input[i],"|")==0){pipeindex[n++]=i;input[i]=NULL;}
+    }
+    pipeindex[n]=count;
+    int in_fd = STDIN_FILENO; 
+    pid_t pids[256];
+    pid_t feeder_pids[256];
+    pid_t writer_pids[256];
+    for (int c = 0; c < n; c++) {
+        int start = pipeindex[c] + 1;
+        int end = pipeindex[c + 1];
+        int cmd_count = end - start;
+        char** cmd_input = &input[start];
+        if (cmd_count == 0) {
+            fprintf(stderr, "cshell: syntax error near unexpected token `|`\n");
+            break;
+        }
+        int fd[2] = {-1, -1};
+        if (c < n - 1) {
+            if (pipe(fd) < 0) {
+                perror("pipe error");
+            }
+        }
     char*arg[1000];char*files[1000];int file_count=0;
     char*out_files[1000];int out_count=0;
     int out[1000];
     int num=0;
-    for (int i=0;i<count;i++){
-        if (strcmp(input[i],"<")==0){
-            if (i+1>=count){fprintf(stderr,"cshell: syntax error\n");return;}
-            else {files[file_count++]=input[i+1];i++;}
+    for (int i=0;i<cmd_count;i++){
+        if (strcmp(cmd_input[i],"<")==0){
+            if (i+1>=cmd_count){fprintf(stderr,"cshell: syntax error\n");return;}
+            else {files[file_count++]=cmd_input[i+1];i++;}
         }
-        else if(strcmp(input[i],">")==0){
-                        if (i+1>=count){fprintf(stderr,"cshell: syntax error\n");return;}
-           else {out[out_count]=0;out_files[out_count]=input[i+1];out_count++;i++;}
+        else if(strcmp(cmd_input[i],">")==0){
+                        if (i+1>=cmd_count){fprintf(stderr,"cshell: syntax error\n");return;}
+           else {out[out_count]=0;out_files[out_count]=cmd_input[i+1];out_count++;i++;}
 
         }
-        else if (strcmp(input[i],">>")==0){
-                        if (i+1>=count){fprintf(stderr,"cshell: syntax error\n");return;}
-                  else {out[out_count]=1;out_files[out_count]=input[i+1];out_count++;i++;}
+        else if (strcmp(cmd_input[i],">>")==0){
+                        if (i+1>=cmd_count){fprintf(stderr,"cshell: syntax error\n");return;}
+                  else {out[out_count]=1;out_files[out_count]=cmd_input[i+1];out_count++;i++;}
 
                     }
                     else {
-                        arg[num++]=input[i];
+                        arg[num++]=cmd_input[i];
                     }
     }
-    if (num==0)return;
+    if (num==0)continue;
     arg[num]=NULL;
     int stored[1000];
     for (int i=0;i<file_count;i++){
@@ -170,11 +196,18 @@ pid_t pid = fork();
             close(pipefd[0]);
             close(pipefd[1]);
         }
+        else if (in_fd!=STDIN_FILENO){dup2(in_fd,STDIN_FILENO);}
         if (out_count==1){dup2(out_stored[0],STDOUT_FILENO);
         } else if (out_count > 1) {
             dup2(out_pipefd[1], STDOUT_FILENO);
             close(out_pipefd[0]);
             close(out_pipefd[1]);}
+        else if (c<n-1){
+            dup2(fd[1],STDOUT_FILENO);
+          
+        }
+        if (in_fd!=STDIN_FILENO)close (in_fd);
+        if (c<n-1){close(fd[0]);close(fd[1]);}
         for (int i = 0; i < file_count; i++) close(stored[i]);
         for (int i = 0; i < out_count; i++) close(out_stored[i]);
         execv(p, arg);
@@ -192,15 +225,21 @@ pid_t pid = fork();
         }
         for (int i = 0; i < file_count; i++) close(stored[i]);
                 for (int i = 0; i < out_count; i++) close(out_stored[i]);
-
-        waitpid(pid, NULL, 0);
-        if (feeder_pid > 0) {
-            waitpid(feeder_pid, NULL, 0);}
-            if (writer_pid > 0) {
-    waitpid(writer_pid, NULL, 0);
-            }}
+if (in_fd!=STDIN_FILENO)close(in_fd);
+if (c<n-1){close(fd[1]);in_fd=fd[0];}
+pids[c]=pid;
+feeder_pids[c]=feeder_pid;
+writer_pids[c]=writer_pid;
+    }
+    free(p);}
+    for (int c=0;c<n;c++){
+        waitpid(pids[c], NULL, 0);
+        if (feeder_pids[c] > 0) {
+            waitpid(feeder_pids[c], NULL, 0);}
+            if (writer_pids[c] > 0) {
+    waitpid(writer_pids[c], NULL, 0);
+            }
         
     
-    free(p);
-   
+        }
 }
