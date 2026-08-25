@@ -59,15 +59,27 @@ return NULL;}
 void execute(char**input,int count){
     if (input[0]==NULL||count==0)return;
     char*arg[1000];char*files[1000];int file_count=0;
+    char*out_files[1000];int out_count=0;
+    int out[1000];
     int num=0;
     for (int i=0;i<count;i++){
         if (strcmp(input[i],"<")==0){
             if (i+1>=count){fprintf(stderr,"cshell: syntax error\n");return;}
             else {files[file_count++]=input[i+1];i++;}
         }
-        else {
-            arg[num++]=input[i];
+        else if(strcmp(input[i],">")==0){
+                        if (i+1>=count){fprintf(stderr,"cshell: syntax error\n");return;}
+           else {out[out_count]=0;out_files[out_count]=input[i+1];out_count++;i++;}
+
         }
+        else if (strcmp(input[i],">>")==0){
+                        if (i+1>=count){fprintf(stderr,"cshell: syntax error\n");return;}
+                  else {out[out_count]=1;out_files[out_count]=input[i+1];out_count++;i++;}
+
+                    }
+                    else {
+                        arg[num++]=input[i];
+                    }
     }
     if (num==0)return;
     arg[num]=NULL;
@@ -79,7 +91,17 @@ void execute(char**input,int count){
             for (int j=0;j<i;j++)close(stored[j]);
             return;}
     }
-
+int out_stored[1000];
+for (int i=0;i<out_count;i++){
+    int flags = O_WRONLY | O_CREAT | (out[i] ? O_APPEND : O_TRUNC);
+        out_stored[i] = open(out_files[i], flags, 0644);
+        if (out_stored[i] < 0) {
+            fprintf(stderr, "cshell: unable to create file for writing\n");
+            for (int j = 0; j < file_count; j++) close(stored[j]);
+            for (int j = 0; j < i; j++) close(out_stored[j]);
+            return;
+        }
+}
     char* cmd=arg[0];
     char* p=path(cmd);
     if (p==NULL){
@@ -113,6 +135,29 @@ int pipefd[2] = {-1, -1};
             exit(EXIT_SUCCESS);
         }
     }
+
+int out_pipefd[2]={-1,-1};
+pid_t writer_pid=-1;
+if (out_count>1){if (pipe(out_pipefd) < 0) {
+            perror("pipe error");
+        }
+        writer_pid=fork();
+        if (writer_pid==0){
+        close(out_pipefd[1]);
+        char buf[4096];
+     ssize_t bytes_read;
+                     while ((bytes_read = read(out_pipefd[0], buf, sizeof(buf))) > 0) {
+            for (int i = 0; i < out_count; i++) {
+                    write(out_stored[i], buf, bytes_read);
+                }}
+                close(out_pipefd[0]);
+            
+           for (int i=0;i<out_count;i++)close(out_stored[i]);
+            exit(EXIT_SUCCESS);}
+        }
+    
+
+
 pid_t pid = fork();
     if (pid < 0) {
         perror("fork error");
@@ -125,7 +170,13 @@ pid_t pid = fork();
             close(pipefd[0]);
             close(pipefd[1]);
         }
+        if (out_count==1){dup2(out_stored[0],STDOUT_FILENO);
+        } else if (out_count > 1) {
+            dup2(out_pipefd[1], STDOUT_FILENO);
+            close(out_pipefd[0]);
+            close(out_pipefd[1]);}
         for (int i = 0; i < file_count; i++) close(stored[i]);
+        for (int i = 0; i < out_count; i++) close(out_stored[i]);
         execv(p, arg);
         perror("execv error");
         exit(EXIT_FAILURE);
@@ -135,13 +186,21 @@ pid_t pid = fork();
             close(pipefd[0]);
             close(pipefd[1]);
         }
-        
+        if (out_count>1){
+           close(out_pipefd[0]);
+            close(out_pipefd[1]);
+        }
         for (int i = 0; i < file_count; i++) close(stored[i]);
+                for (int i = 0; i < out_count; i++) close(out_stored[i]);
+
         waitpid(pid, NULL, 0);
         if (feeder_pid > 0) {
-            waitpid(feeder_pid, NULL, 0);
-        }
-    }
+            waitpid(feeder_pid, NULL, 0);}
+            if (writer_pid > 0) {
+    waitpid(writer_pid, NULL, 0);
+            }}
+        
+    
     free(p);
    
 }
